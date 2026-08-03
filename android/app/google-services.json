@@ -1,0 +1,122 @@
+{
+  "project_info": {
+    "project_number": "1084030875192",
+    "project_id": "hotel-project-fa6f3",
+    "storage_bucket": "hotel-project-fa6f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084030875192:android:123e147d7261b5e35058cd",
+        "android_client_info": {
+          "package_name": "com.rezzaky.stayfix"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1084030875192-63a1heclpgo1vbnb2641knvbi3e34gsi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rezzaky.stayfix",
+            "certificate_hash": "1f7b8d3498796bf9789912ce756c12a905a91542"
+          }
+        },
+        {
+          "client_id": "1084030875192-8huc457fj5bi0t6st53563d8c7lk1ftm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rezzaky.stayfix",
+            "certificate_hash": "ff7d2b615f37bdf9e9346f03c23f6a11ac36e058"
+          }
+        },
+        {
+          "client_id": "1084030875192-acp3u1rin9a9lo5lh48djivn3ifi2frl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rezzaky.stayfix",
+            "certificate_hash": "3cadfb57286c7432cf4ceee9d533cec9ce0f9ccb"
+          }
+        },
+        {
+          "client_id": "1084030875192-3mnalpia37tp1kjfdtqi13h1v3d4t3kk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnAZPJ_gtZDypWjOBpHqd3hbNZAcmtHJY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1084030875192-3mnalpia37tp1kjfdtqi13h1v3d4t3kk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1084030875192-1opjb9vohnia6p8r0v2g7t4ourjgs9mo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.rezzaky.stayfixjob"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084030875192:android:81872a8ef6e91d6f5058cd",
+        "android_client_info": {
+          "package_name": "com.rezzaky.stayfix_job"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1084030875192-dqjjokgd867h5n0vd52u2n8ckj36n61k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rezzaky.stayfix_job",
+            "certificate_hash": "e9a750b061b7665a638e35165e6a3bf263599f04"
+          }
+        },
+        {
+          "client_id": "1084030875192-gedhgqc0q2478mhehq9u5v47udbt7nkt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rezzaky.stayfix_job",
+            "certificate_hash": "5b46a93eac79a19b4d4afe8004c4241e1f5bbb46"
+          }
+        },
+        {
+          "client_id": "1084030875192-3mnalpia37tp1kjfdtqi13h1v3d4t3kk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnAZPJ_gtZDypWjOBpHqd3hbNZAcmtHJY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1084030875192-3mnalpia37tp1kjfdtqi13h1v3d4t3kk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1084030875192-1opjb9vohnia6p8r0v2g7t4ourjgs9mo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.rezzaky.stayfixjob"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
