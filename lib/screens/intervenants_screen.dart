@@ -286,11 +286,12 @@ class _IntervenantsScreenState extends State<IntervenantsScreen> {
         final data = entry.value;
         double? distanceKm;
         if (managerCoords != null) {
+          final targetCoords = managerCoords;
           final addr = (_resolveWorkerAddress(data) ?? '').trim();
           if (addr.isNotEmpty) {
             final coords = await _geocodeAddress(addr, apiKey: mapsKey);
             if (coords != null) {
-              distanceKm = _haversineKm(managerCoords, coords);
+              distanceKm = _haversineKm(targetCoords, coords);
             }
           }
         }
