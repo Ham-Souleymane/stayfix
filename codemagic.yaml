@@ -39,13 +39,16 @@ workflows:
         submit_as_draft: true
 
   ios-workflow:
-    name: iOS Build (Unsigned)
+    name: iOS Release
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.rezzaky.stayfix
     scripts:
       - name: Generate .env file
         script: |
@@ -60,12 +63,19 @@ workflows:
       - name: Install Pods
         script: find . -name "Podfile" -execdir pod install \;
 
-      - name: Build iOS Archive (Unsigned)
+      - name: Set up code signing settings on Xcode project
+        script: xcode-project use-profiles
+
+      - name: Build IPA
         script: |
-          flutter build ipa --release --no-codesign
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
-      - build/ios/archive/Runner.xcarchive
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
 
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
