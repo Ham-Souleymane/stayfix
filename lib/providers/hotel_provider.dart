@@ -205,8 +205,16 @@ class HotelProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('userId');
+    _lastAuthErrorMessage = null;
+    _setLastAuthCreatedAccount(false);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('userId');
+    } catch (e) {
+      debugPrint('Logout prefs error: $e');
+    }
+
     ManagerSessionGuard.reset();
     _roomsSubscription?.cancel();
     _hotelsSubscription?.cancel();
@@ -216,10 +224,22 @@ class HotelProvider extends ChangeNotifier {
     _rooms = [];
     _myHotels = [];
     _hotelStaff = [];
+
     notifyListeners();
+
     try {
       await PushNotificationService.removeTokenForCurrentUser();
     } catch (_) {}
+
+    try {
+      final googleSignIn = _buildGoogleSignIn();
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.signOut();
+      }
+    } catch (e) {
+      debugPrint('Google SignOut error: $e');
+    }
+
     try {
       await _auth.signOut();
     } catch (e) {
@@ -592,18 +612,13 @@ class HotelProvider extends ChangeNotifier {
       UserCredential cred;
       try {
         cred = await _auth.createUserWithEmailAndPassword(
-            email: email, password: password);
+            email: email.trim(), password: password);
       } on FirebaseAuthException catch (e) {
         if (e.code == 'email-already-in-use') {
-          try {
-            cred = await _auth.signInWithEmailAndPassword(
-                email: email, password: password);
-          } catch (_) {
-            _lastAuthErrorMessage =
-                'Cette adresse email est déjà utilisée. Veuillez vous connecter.';
-            notifyListeners();
-            return false;
-          }
+          _lastAuthErrorMessage =
+              'Cette adresse email est déjà utilisée. Veuillez vous connecter.';
+          notifyListeners();
+          return false;
         } else if (e.code == 'weak-password') {
           _lastAuthErrorMessage =
               'Le mot de passe doit contenir au moins 6 caractères.';
@@ -621,21 +636,33 @@ class HotelProvider extends ChangeNotifier {
         }
       }
 
-      List<String> names = fullName.split(" ");
-      String fName = names.isNotEmpty ? names.first : fullName;
-      String lName = names.length > 1 ? names.last : "";
+      if (cred.user == null) {
+        _lastAuthErrorMessage = "Erreur lors de la création de l'utilisateur.";
+        notifyListeners();
+        return false;
+      }
+
+      try {
+        await cred.user!.updateDisplayName(fullName.trim());
+      } catch (_) {}
+
+      final List<String> names = fullName.trim().split(RegExp(r'\s+'));
+      final String fName = names.isNotEmpty ? names.first : fullName.trim();
+      final String lName = names.length > 1 ? names.sublist(1).join(" ") : "";
+      final String username =
+          fullName.trim().isNotEmpty ? fullName.trim() : email.trim().split('@')[0];
 
       final newDirector = HotelUser(
         id: cred.user!.uid,
-        email: email,
+        email: email.trim(),
         firstName: fName,
         lastName: lName,
-        username: email.split('@')[0],
+        username: username,
         role: UserRoles.director,
-        phone: phone,
+        phone: phone.trim(),
       );
 
-      await _firestore.collection('users').doc(cred.user!.uid).set({
+      final Map<String, dynamic> userData = {
         'firstName': newDirector.firstName,
         'lastName': newDirector.lastName,
         'username': newDirector.username,
@@ -643,13 +670,21 @@ class HotelProvider extends ChangeNotifier {
         'role': newDirector.role,
         'phone': newDirector.phone,
         'createdAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      };
+
+      await _firestore
+          .collection('users')
+          .doc(cred.user!.uid)
+          .set(userData, SetOptions(merge: true));
 
       _currentUser = newDirector;
+      _setLastAuthCreatedAccount(true);
+      AppSessionService.setCurrentUser(userId: cred.user!.uid, data: userData);
       await _saveSession(cred.user!.uid);
       notifyListeners();
       return true;
     } catch (e) {
+      debugPrint("registerDirector Error: $e");
       _lastAuthErrorMessage = "Erreur lors de l'inscription";
       notifyListeners();
       return false;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../providers/hotel_provider.dart';
+import 'auth_screen.dart';
 import 'privacy_account_center_screen.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -93,6 +94,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 icon: const Icon(LucideIcons.shieldCheck),
                 label: const Text("CONFIDENTIALITE ET COMPTE"),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final provider =
+                      Provider.of<HotelProvider>(context, listen: false);
+                  await provider.logout();
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AuthScreen()),
+                      (route) => false,
+                    );
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: const BorderSide(color: Colors.redAccent),
+                ),
+                icon: const Icon(LucideIcons.logOut, color: Colors.redAccent),
+                label: const Text("DECONNEXION"),
               ),
             ),
 

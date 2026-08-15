@@ -79,14 +79,16 @@ class OtherPropertyDashboard extends StatelessWidget {
                         onTap: () async {
                           final provider = Provider.of<HotelProvider>(context,
                               listen: false);
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const AuthScreen(),
-                            ),
-                            (route) => false,
-                          );
                           await provider.logout();
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AuthScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
                         },
                       ),
                     ],

@@ -191,18 +191,17 @@ class _DashboardScreenState extends State<DashboardScreen>
         IconButton(
           tooltip: 'Déconnexion',
           icon: Icon(LucideIcons.logOut, color: theme.colorScheme.onSurface),
-          onPressed: () {
+          onPressed: () async {
             _isLoggingOut = true;
             final hotelProvider =
                 Provider.of<HotelProvider>(context, listen: false);
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const AuthScreen()),
-              (route) => false,
-            );
-            Future.delayed(
-              const Duration(milliseconds: 200),
-              () => hotelProvider.logout(),
-            );
+            await hotelProvider.logout();
+            if (context.mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const AuthScreen()),
+                (route) => false,
+              );
+            }
           },
         ),
       ],
