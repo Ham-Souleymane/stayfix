@@ -46,9 +46,8 @@ app.*.map.json
 /android/app/release
 
 # Environment & secrets
-.env
 .env.example
-*.env
+*.env.local
 
 # Firebase service account keys
 *firebase-adminsdk*.json

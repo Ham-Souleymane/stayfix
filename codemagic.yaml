@@ -50,12 +50,15 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.rezzaky.stayfix
     scripts:
-      - name: Generate .env file
+      - name: Ensure .env file
         script: |
-          echo "VPS_MEDIA_BASE_URL=$VPS_MEDIA_BASE_URL" >> .env
-          echo "STAYFIX_EMAIL_SECRET=$STAYFIX_EMAIL_SECRET" >> .env
-          echo "STAYFIX_EMAIL_WEB_APP_URL=$STAYFIX_EMAIL_WEB_APP_URL" >> .env
-          echo "GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY" >> .env
+          if [ ! -f .env ]; then
+            touch .env
+          fi
+          if [ ! -z "$VPS_MEDIA_BASE_URL" ]; then echo "VPS_MEDIA_BASE_URL=$VPS_MEDIA_BASE_URL" >> .env; fi
+          if [ ! -z "$STAYFIX_EMAIL_SECRET" ]; then echo "STAYFIX_EMAIL_SECRET=$STAYFIX_EMAIL_SECRET" >> .env; fi
+          if [ ! -z "$STAYFIX_EMAIL_WEB_APP_URL" ]; then echo "STAYFIX_EMAIL_WEB_APP_URL=$STAYFIX_EMAIL_WEB_APP_URL" >> .env; fi
+          if [ ! -z "$GOOGLE_MAPS_API_KEY" ]; then echo "GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY" >> .env; fi
 
       - name: Get Flutter packages
         script: flutter pub get
