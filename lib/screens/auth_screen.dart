@@ -250,7 +250,10 @@ class _AuthScreenState extends State<AuthScreen> {
         (route) => false,
       );
     } else {
-      showAuthError(context, "Erreur lors de l'inscription");
+      showAuthError(
+        context,
+        provider.lastAuthErrorMessage ?? "Erreur lors de l'inscription",
+      );
     }
   }
 

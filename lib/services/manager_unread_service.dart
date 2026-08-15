@@ -23,6 +23,18 @@ class ManagerUnreadService {
     Map<String, dynamic> data,
     String uid,
   ) {
+    final managerId = (data['managerId'] as String?)?.trim();
+    final createdBy = (data['createdBy'] as String?)?.trim();
+    if (managerId != null && managerId.isNotEmpty && managerId != uid) {
+      return false;
+    }
+    if ((managerId == null || managerId.isEmpty) &&
+        createdBy != null &&
+        createdBy.isNotEmpty &&
+        createdBy != uid) {
+      return false;
+    }
+
     final normalizedUid = uid.trim();
     if (normalizedUid.isEmpty) return false;
 

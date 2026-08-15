@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'other_property_dashboard.dart';
 import 'terms_screen.dart';
 import '../services/app_session_service.dart';
 import '../services/property_scope_service.dart';
+import '../services/push_notification_service.dart';
 
 Future<Widget> resolveManagerDestination() async {
   final user = FirebaseAuth.instance.currentUser;
@@ -32,6 +34,7 @@ Future<Widget> resolveSessionDestination(String userId) async {
     return const DirectorTypeScreen();
   }
   AppSessionService.setCurrentUser(userId: userId, data: data);
+  unawaited(PushNotificationService.saveTokenForUser(userId));
   if (PropertyScopeService.isStayFixJobOnly(data) ||
       PropertyScopeService.isDisabled(data)) {
     return const AuthScreen();

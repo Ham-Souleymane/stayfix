@@ -11,6 +11,8 @@ import 'core/theme.dart';
 import 'core/theme_provider.dart';
 import 'providers/hotel_provider.dart';
 import 'services/app_session_service.dart';
+import 'services/message_sound_service.dart';
+import 'services/push_notification_service.dart';
 import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/manager_device_lock_screen.dart';
@@ -30,6 +32,7 @@ void main() async {
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
     );
+    await PushNotificationService.initialize();
   } catch (e) {
     runApp(ErrorApp(error: e.toString()));
     return;
@@ -52,21 +55,23 @@ class HotelApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    return MaterialApp(
-      title: "STAYFIX MANAGER",
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark, // Always luxury dark
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(themeProvider.fontScale),
-          ),
-          child: child!,
-        );
-      },
-      home: const SplashPage(),
+    return GlobalMessageSoundListener(
+      child: MaterialApp(
+        title: "STAYFIX MANAGER",
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.dark, // Always luxury dark
+        builder: (context, child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: TextScaler.linear(themeProvider.fontScale),
+            ),
+            child: child!,
+          );
+        },
+        home: const SplashPage(),
+      ),
     );
   }
 }

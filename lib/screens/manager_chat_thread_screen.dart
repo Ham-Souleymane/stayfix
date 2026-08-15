@@ -12,6 +12,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'auth_screen.dart';
 import '../services/manager_unread_service.dart';
 import '../services/app_session_service.dart';
+import '../services/message_sound_service.dart';
+import '../services/push_notification_service.dart';
 import '../services/app_env.dart';
 import '../services/vps_media_service.dart';
 import 'package:http/http.dart' as http;
@@ -221,7 +223,6 @@ class _ManagerChatThreadScreenState extends State<ManagerChatThreadScreen> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final AudioRecorder _recorder = AudioRecorder();
-  final AudioPlayer _notificationPlayer = AudioPlayer();
 
   // Cached streams â€” must not be recreated on setState or the StreamBuilders
   // cancel their subscriptions and briefly show an empty state.
@@ -269,19 +270,7 @@ class _ManagerChatThreadScreenState extends State<ManagerChatThreadScreen> {
     _missionsCountSub?.cancel();
     _controller.dispose();
     _recorder.dispose();
-    _notificationPlayer.dispose();
     super.dispose();
-  }
-
-  Future<void> _playNotificationSound() async {
-    try {
-      await _notificationPlayer.stop();
-      await _notificationPlayer.play(
-        AssetSource('audio/IPHONE NOTIFICATION SOUND EFFECT (PING DING).mp3'),
-      );
-    } catch (_) {
-      // Silently ignore playback errors so the chat remains functional.
-    }
   }
 
   @override
@@ -1272,7 +1261,58 @@ class _ManagerChatThreadScreenState extends State<ManagerChatThreadScreen> {
           .collection('conversations')
           .doc(widget.conversationId)
           .set(payload, SetOptions(merge: true));
+
+      // Dispatch FCM push notification to other participants
+      unawaited(_dispatchPushNotification(uid, lastMessage));
     } catch (_) {}
+  }
+
+  Future<void> _dispatchPushNotification(
+      String senderUid, String messageText) async {
+    try {
+      // Load sender name
+      String senderName = widget.title;
+      final senderDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(senderUid)
+          .get();
+      if (senderDoc.exists) {
+        final d = senderDoc.data() ?? {};
+        final first = (d['firstName'] as String?)?.trim() ?? '';
+        final last = (d['lastName'] as String?)?.trim() ?? '';
+        final full = '$first $last'.trim();
+        if (full.isNotEmpty) senderName = full;
+      }
+
+      // Load conversation details (participants and mutedBy list)
+      final convSnap = await FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(widget.conversationId)
+          .get();
+      final convData = convSnap.data() ?? {};
+      final participants = ((convData['participants'] as List?) ?? const [])
+          .map((e) => '$e'.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      final targetParticipants =
+          participants.isNotEmpty ? participants : _participantIds;
+
+      final mutedBy = ((convData['mutedBy'] as List?) ?? const [])
+          .map((e) => '$e'.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+
+      await PushNotificationService.sendNotificationToParticipants(
+        participantIds: targetParticipants,
+        senderName: senderName,
+        messageText: messageText,
+        conversationId: widget.conversationId,
+        mutedBy: mutedBy,
+        conversationData: convData,
+      );
+    } catch (e) {
+      debugPrint('Error dispatching push notification: $e');
+    }
   }
 
   Future<void> _appendSystemMessage(String text) async {
@@ -1546,8 +1586,10 @@ class _ManagerChatThreadScreenState extends State<ManagerChatThreadScreen> {
                           final latestData = latest.data();
                           if (latestData['senderId'] != sessionUid &&
                               _lastIncomingMessageId != latest.id) {
+                            if (_lastIncomingMessageId != null) {
+                              unawaited(MessageSoundService.playNotificationSound());
+                            }
                             _lastIncomingMessageId = latest.id;
-                            unawaited(_playNotificationSound());
                           }
                         }
                         if (docs.isEmpty) {

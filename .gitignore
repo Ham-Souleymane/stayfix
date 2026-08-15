@@ -54,8 +54,9 @@ app.*.map.json
 *firebase-adminsdk*.json
 assets/hotel-project-fa6f3-firebase-adminsdk-fbsvc-1f7f7b0e69.json
 
-# Android build artifacts
+# Android build artifacts & dumps
 android/build/
+*.hprof
 
 # Local debug/test files
 curl_body.txt

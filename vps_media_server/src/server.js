@@ -387,6 +387,69 @@ app.post('/api/email/invite', verifyInviteWebhook, async (req, res) => {
   }
 });
 
+app.post('/api/push/send', async (req, res) => {
+  const tokens = Array.isArray(req.body?.tokens)
+    ? req.body.tokens.map((t) => `${t || ''}`.trim()).filter(Boolean)
+    : (req.body?.token ? [`${req.body.token}`.trim()] : []);
+
+  const title = `${req.body?.title || 'Stayfix'}`.trim();
+  const body = `${req.body?.body || 'Nouveau message'}`.trim();
+  const conversationId = `${req.body?.conversationId || ''}`.trim();
+  const targetApp = `${req.body?.targetApp || 'all'}`.trim();
+
+  if (!tokens.length) {
+    return res.status(400).json({ error: 'tokens are required' });
+  }
+
+  if (!admin.apps.length) {
+    return res.status(500).json({ error: 'firebase admin is not initialized on server' });
+  }
+
+  try {
+    const payload = {
+      tokens,
+      notification: {
+        title,
+        body,
+      },
+      data: {
+        conversationId,
+        targetApp,
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+      },
+      android: {
+        priority: 'high',
+        notification: {
+          sound: 'default',
+          channelId: 'stayfix_messages_channel',
+          priority: 'high',
+          defaultSound: true,
+          defaultVibrateTimings: true,
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+          },
+        },
+      },
+    };
+
+    const response = await admin.messaging().sendEachForMulticast(payload);
+    console.log(`[Push Notification] Sent to ${tokens.length} tokens. Success: ${response.successCount}, Failed: ${response.failureCount}`);
+    return res.status(200).json({
+      ok: true,
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+    });
+  } catch (error) {
+    console.error('[Push Notification Error]:', error);
+    return res.status(500).json({ error: error.message || 'push send failed' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`stayfix-media-server listening on ${baseUrl}`);
 });

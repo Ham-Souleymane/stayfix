@@ -12,6 +12,7 @@ import '../core/manager_session_guard.dart';
 import '../models/hotel_models.dart';
 import '../services/app_session_service.dart';
 import '../services/property_scope_service.dart';
+import '../services/push_notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -216,6 +217,9 @@ class HotelProvider extends ChangeNotifier {
     _myHotels = [];
     _hotelStaff = [];
     notifyListeners();
+    try {
+      await PushNotificationService.removeTokenForCurrentUser();
+    } catch (_) {}
     try {
       await _auth.signOut();
     } catch (e) {
@@ -583,9 +587,40 @@ class HotelProvider extends ChangeNotifier {
       required String password,
       required String fullName,
       required String phone}) async {
+    _lastAuthErrorMessage = null;
     try {
-      UserCredential cred = await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+      UserCredential cred;
+      try {
+        cred = await _auth.createUserWithEmailAndPassword(
+            email: email, password: password);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'email-already-in-use') {
+          try {
+            cred = await _auth.signInWithEmailAndPassword(
+                email: email, password: password);
+          } catch (_) {
+            _lastAuthErrorMessage =
+                'Cette adresse email est déjà utilisée. Veuillez vous connecter.';
+            notifyListeners();
+            return false;
+          }
+        } else if (e.code == 'weak-password') {
+          _lastAuthErrorMessage =
+              'Le mot de passe doit contenir au moins 6 caractères.';
+          notifyListeners();
+          return false;
+        } else if (e.code == 'invalid-email') {
+          _lastAuthErrorMessage = 'Adresse email invalide.';
+          notifyListeners();
+          return false;
+        } else {
+          _lastAuthErrorMessage =
+              e.message ?? "Erreur lors de l'inscription";
+          notifyListeners();
+          return false;
+        }
+      }
+
       List<String> names = fullName.split(" ");
       String fName = names.isNotEmpty ? names.first : fullName;
       String lName = names.length > 1 ? names.last : "";
@@ -608,13 +643,15 @@ class HotelProvider extends ChangeNotifier {
         'role': newDirector.role,
         'phone': newDirector.phone,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       _currentUser = newDirector;
       await _saveSession(cred.user!.uid);
       notifyListeners();
       return true;
     } catch (e) {
+      _lastAuthErrorMessage = "Erreur lors de l'inscription";
+      notifyListeners();
       return false;
     }
   }

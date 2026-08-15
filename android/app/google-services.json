@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1084030875192-3i7r4j5qvciodjd7v8665clerc711qch.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rezzaky.stayfix",
+            "certificate_hash": "0963809ad277f982b4a358c2c7ef8ae91266af72"
+          }
+        },
+        {
           "client_id": "1084030875192-63a1heclpgo1vbnb2641knvbi3e34gsi.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -87,6 +95,14 @@
           "android_info": {
             "package_name": "com.rezzaky.stayfix_job",
             "certificate_hash": "5b46a93eac79a19b4d4afe8004c4241e1f5bbb46"
+          }
+        },
+        {
+          "client_id": "1084030875192-i742fh0mm4uvct82qbs6iirkegcoit0b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rezzaky.stayfix_job",
+            "certificate_hash": "709c5d6f6d0fbe2d9fa1e144fdd5a6ddff49d599"
           }
         },
         {

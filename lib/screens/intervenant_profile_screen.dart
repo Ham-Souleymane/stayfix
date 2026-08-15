@@ -85,17 +85,25 @@ class _IntervenantProfileScreenState extends State<IntervenantProfileScreen> {
   Future<void> _fetchProfile() async {
     try {
       // Force server fetch to bypass stale offline cache
-      final doc = await FirebaseFirestore.instance
+      var doc = await FirebaseFirestore.instance
           .collection('profiles')
           .doc(widget.workerId)
           .get(const GetOptions(source: Source.server));
+      var profileData = doc.data();
+      if (profileData == null || !doc.exists) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.workerId)
+            .get(const GetOptions(source: Source.server));
+        profileData = userDoc.data();
+      }
       if (!mounted) return;
       // ignore: avoid_print
-      print('[FETCH_PROFILE] workerId=${widget.workerId} docExists=${doc.exists} phone=${doc.data()?["phone"]} allData=${doc.data()}');
+      print('[FETCH_PROFILE] workerId=${widget.workerId} profileData=$profileData');
       setState(() {
-        _data = doc.data();
+        _data = profileData;
         _isLoading = false;
-        _error = doc.exists ? null : 'Profil introuvable';
+        _error = profileData != null ? null : 'Profil introuvable';
       });
     } catch (e) {
       // ignore: avoid_print
@@ -213,7 +221,7 @@ class _IntervenantProfileScreenState extends State<IntervenantProfileScreen> {
         onCallTap: _hasCallablePhone(phone)
             ? () async {
                 Navigator.pop(context);
-                await _launchDialer(phone!);
+                await _launchDialer(phone);
               }
             : null,
       ),

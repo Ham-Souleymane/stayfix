@@ -56,8 +56,8 @@ class WorkerFilterState {
     this.department,
     this.role,
     this.specialty,
-    this.experience = 5,
-    this.maxDistanceKm = 20,
+    this.experience = 0,
+    this.maxDistanceKm = 50,
     this.availableNow = false,
     this.availabilityDate,
   });
@@ -244,16 +244,49 @@ class _IntervenantsScreenState extends State<IntervenantsScreen> {
       );
     }
 
-    final workerSnapshot =
-        await FirebaseFirestore.instance.collection('profiles').get();
+    final collectionsToFetch = await Future.wait([
+      FirebaseFirestore.instance.collection('profiles').get(),
+      FirebaseFirestore.instance.collection('users').get(),
+      FirebaseFirestore.instance.collection('workers').get(),
+    ]);
+
+    final Map<String, Map<String, dynamic>> combinedWorkerData = {};
+
+    void mergeDocData(String docId, Map<String, dynamic> data) {
+      if (!combinedWorkerData.containsKey(docId)) {
+        combinedWorkerData[docId] = Map<String, dynamic>.from(data);
+      } else {
+        final existing = combinedWorkerData[docId]!;
+        data.forEach((key, value) {
+          if (value != null) {
+            if (value is String && value.trim().isNotEmpty) {
+              final existingVal = existing[key];
+              if (existingVal == null || (existingVal is String && existingVal.trim().isEmpty)) {
+                existing[key] = value;
+              }
+            } else if (existing[key] == null) {
+              existing[key] = value;
+            }
+          }
+        });
+      }
+    }
+
+    for (final snapshot in collectionsToFetch) {
+      for (final doc in snapshot.docs) {
+        mergeDocData(doc.id, doc.data());
+      }
+    }
 
     final resolved = await Future.wait(
-      workerSnapshot.docs
-          .where((doc) => _isStayFixJobWorkerProfile(doc.data()))
-          .map((doc) async {
+      combinedWorkerData.entries
+          .where((entry) => _isStayFixJobWorkerProfile(entry.value))
+          .map((entry) async {
+        final docId = entry.key;
+        final data = entry.value;
         double? distanceKm;
         if (managerCoords != null) {
-          final addr = (_resolveWorkerAddress(doc.data()) ?? '').trim();
+          final addr = (_resolveWorkerAddress(data) ?? '').trim();
           if (addr.isNotEmpty) {
             final coords = await _geocodeAddress(addr, apiKey: mapsKey);
             if (coords != null) {
@@ -261,7 +294,7 @@ class _IntervenantsScreenState extends State<IntervenantsScreen> {
             }
           }
         }
-        return _workerFromDoc(doc, distanceKm: distanceKm);
+        return _workerFromMap(docId, data, distanceKm: distanceKm);
       }),
     );
     workers = resolved
@@ -1142,13 +1175,15 @@ class _StickyFilterChipsDelegate extends SliverPersistentHeaderDelegate {
 // Data layer — completely unchanged
 // -------------------------------------------------------------------------------
 
-_WorkerItem _workerFromDoc(
-  QueryDocumentSnapshot<Map<String, dynamic>> doc, {
+_WorkerItem _workerFromMap(
+  String docId,
+  Map<String, dynamic> data, {
   double? distanceKm,
 }) {
-  final data = doc.data();
   final fullNameField = ((data['fullName'] as String?) ?? '').trim();
   final displayNameField = ((data['displayName'] as String?) ?? '').trim();
+  final nameField = ((data['name'] as String?) ?? '').trim();
+  final workerNameField = ((data['workerName'] as String?) ?? '').trim();
   final firstName = ((data['firstName'] as String?) ?? '').trim();
   final lastName = ((data['lastName'] as String?) ?? '').trim();
   final username = ((data['username'] as String?) ?? '').trim();
@@ -1183,13 +1218,17 @@ _WorkerItem _workerFromDoc(
       ? fullNameField
       : displayNameField.isNotEmpty
           ? displayNameField
-          : fullName.isNotEmpty
-              ? fullName
-              : (username.isNotEmpty
-                  ? username
-                  : (email.isNotEmpty
-                      ? email.split('@').first
-                      : 'Intervenant'));
+          : nameField.isNotEmpty
+              ? nameField
+              : workerNameField.isNotEmpty
+                  ? workerNameField
+                  : fullName.isNotEmpty
+                      ? fullName
+                      : (username.isNotEmpty
+                          ? username
+                          : (email.isNotEmpty
+                              ? email.split('@').first
+                              : 'Intervenant'));
 
   final resolvedRole = _resolveWorkerRole(
     role: role,
@@ -1215,7 +1254,7 @@ _WorkerItem _workerFromDoc(
   final resolvedExperience = experience ?? _parseExperienceYears(data);
 
   return _WorkerItem(
-    id: doc.id,
+    id: docId,
     fullName: displayName,
     role: resolvedRole,
     department: resolvedDepartment,
@@ -1245,9 +1284,32 @@ bool _isStayFixJobWorkerProfile(Map<String, dynamic> data) {
     return true;
   }
 
-  final accountType = (data['accountType'] as String?)?.trim().toLowerCase();
-  if (accountType == 'worker' || accountType == 'concierge') {
+  final accountType =
+      (data['accountType'] as String?)?.trim().toLowerCase() ?? '';
+  if (accountType == 'worker' ||
+      accountType == 'concierge' ||
+      accountType == 'stayfix_job' ||
+      accountType == 'intervenant' ||
+      accountType == 'prestataire' ||
+      accountType == 'employee' ||
+      accountType == 'jobber' ||
+      accountType == 'job') {
     return true;
+  }
+
+  final isManagerOrAdmin = accountType == 'manager' ||
+      accountType == 'gestionnaire' ||
+      accountType == 'director' ||
+      accountType == 'admin' ||
+      accountType == 'client' ||
+      accountType == 'owner' ||
+      accountType == 'hotel_manager' ||
+      accountType == 'villa_manager' ||
+      accountType == 'immeuble_manager' ||
+      accountType == 'apartment_account';
+
+  if (isManagerOrAdmin) {
+    return false;
   }
 
   final department = (data['department'] as String?)?.trim() ?? '';
@@ -1259,10 +1321,28 @@ bool _isStayFixJobWorkerProfile(Map<String, dynamic> data) {
   if (specialties is List && specialties.isNotEmpty) {
     return true;
   }
-  return role.isNotEmpty &&
+  if (role.isNotEmpty &&
       !role.contains('manager') &&
       !role.contains('gestionnaire') &&
-      !role.contains('director');
+      !role.contains('director') &&
+      !role.contains('admin')) {
+    return true;
+  }
+
+  final name = ((data['fullName'] ??
+          data['displayName'] ??
+          data['username'] ??
+          data['name'] ??
+          data['workerName'] ??
+          '') as String)
+      .trim();
+  final email = ((data['email'] ?? '') as String).trim();
+  final phone = ((data['phone'] ?? '') as String).trim();
+  if (name.isNotEmpty || email.isNotEmpty || phone.isNotEmpty) {
+    return true;
+  }
+
+  return false;
 }
 
 String? _resolveWorkerProfileImage(Map<String, dynamic> data) {
@@ -1422,7 +1502,8 @@ List<_WorkerItem> _applyFiltersAndSort(
         worker.distanceKm! > filters.maxDistanceKm) {
       return false;
     }
-    if (worker.experienceYears != null &&
+    if (filters.experience > 0 &&
+        worker.experienceYears != null &&
         worker.experienceYears! < filters.experience) {
       return false;
     }

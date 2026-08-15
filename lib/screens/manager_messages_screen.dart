@@ -532,7 +532,19 @@ class _ManagerMessagesScreenState extends State<ManagerMessagesScreen> {
   List<_ConvItem> _parseItems(
       AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snap, String uid) {
     if (!snap.hasData) return [];
-    final items = snap.data!.docs.map((d) => _convFromDoc(d, uid)).toList();
+    final validDocs = snap.data!.docs.where((d) {
+      final data = d.data();
+      final managerId = (data['managerId'] as String?)?.trim();
+      final createdBy = (data['createdBy'] as String?)?.trim();
+      if (managerId != null && managerId.isNotEmpty) {
+        return managerId == uid;
+      }
+      if (createdBy != null && createdBy.isNotEmpty) {
+        return createdBy == uid;
+      }
+      return true;
+    });
+    final items = validDocs.map((d) => _convFromDoc(d, uid)).toList();
     items.sort((a, b) {
       final aTime = a.lastAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       final bTime = b.lastAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -1925,6 +1937,7 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
           .take(3)
           .toList();
       await FirebaseFirestore.instance.collection('conversations').add({
+        'appOrigin': 'stayfix',
         'type': 'team',
         'title': name,
         'participants': participants,

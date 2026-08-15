@@ -89,7 +89,14 @@ class ManagerWorkerContactService {
         .collection('profiles')
         .doc(workerId)
         .get();
-    final profile = profileDoc.data() ?? const <String, dynamic>{};
+    var profile = profileDoc.data() ?? const <String, dynamic>{};
+    if (profile.isEmpty) {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(workerId)
+          .get();
+      profile = userDoc.data() ?? const <String, dynamic>{};
+    }
 
     final resolvedName =
         _resolveWorkerName(profile, workerName: workerName).trim();
@@ -181,6 +188,8 @@ class ManagerWorkerContactService {
               .toList();
       final type = (data['type'] as String?)?.trim() ?? '';
       final storedWorkerId = (data['workerId'] as String?)?.trim() ?? '';
+      final origin = (data['appOrigin'] as String?)?.trim();
+      if (origin == 'stayfix_job') continue;
       if (type == 'intervenant' &&
           participants.contains(workerId) &&
           (storedWorkerId.isEmpty || storedWorkerId == workerId)) {
@@ -190,6 +199,7 @@ class ManagerWorkerContactService {
 
     return FirebaseFirestore.instance.collection('conversations').add({
       'type': 'intervenant',
+      'appOrigin': 'stayfix',
       'title': title,
       'subtitle': subtitle,
       'participants': <String>[managerUid, workerId],
@@ -229,6 +239,8 @@ class ManagerWorkerContactService {
               .toList();
       final type = (data['type'] as String?)?.trim() ?? '';
       final storedWorkerId = (data['workerId'] as String?)?.trim() ?? '';
+      final origin = (data['appOrigin'] as String?)?.trim();
+      if (origin == 'stayfix_job') continue;
       if (type == 'intervenant' &&
           participants.contains(workerId) &&
           (storedWorkerId.isEmpty || storedWorkerId == workerId)) {
