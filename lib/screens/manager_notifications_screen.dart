@@ -88,6 +88,10 @@ class ManagerNotificationsScreen extends StatelessWidget {
 
               return GestureDetector(
                 onTap: () async {
+                  // Mark as read immediately so the red dot clears right away.
+                  await ManagerUnreadService.markConversationAsRead(
+                      docs[index].id);
+                  if (!context.mounted) return;
                   await Navigator.push(
                     context,
                     MaterialPageRoute(

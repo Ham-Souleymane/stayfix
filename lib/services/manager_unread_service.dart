@@ -49,11 +49,16 @@ class ManagerUnreadService {
     final unreadBy = data['unreadBy'];
     if (unreadBy is Map) {
       final value = unreadBy[normalizedUid];
+      // Explicitly marked as read (0) → definitively not unread.
+      if (value is num && value <= 0) {
+        return false;
+      }
       if (value is num && value > 0) {
         return true;
       }
     }
 
+    // Fallback: compare lastReadAt vs lastMessageAt timestamps.
     final lastReadAt = data['lastReadAt'];
     if (lastReadAt is! Map) return true;
     final myLastRead = lastReadAt[normalizedUid];

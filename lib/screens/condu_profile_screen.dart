@@ -12,6 +12,7 @@ import 'auth_screen.dart';
 import 'intervenants_screen.dart';
 import 'manager_property_route_helper.dart';
 import 'manager_messages_screen.dart';
+import 'manager_notifications_screen.dart';
 import 'manager_offers_screen.dart';
 import 'privacy_account_center_screen.dart';
 import '../services/property_scope_service.dart';
@@ -857,8 +858,12 @@ class _ConduProfileScreenState extends State<ConduProfileScreen> {
               context,
               MaterialPageRoute(builder: (_) => const ManagerOffersScreen()),
             ),
-            onNotifications: () =>
-                _showSnack('Notifications bientot disponibles.'),
+            onNotifications: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ManagerNotificationsScreen(),
+              ),
+            ),
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
@@ -1629,18 +1634,7 @@ class _InfoRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              data.label,
-              style: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.60),
-                fontSize: 13,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
               hasValue ? data.value! : 'Non renseigne',
-              textAlign: TextAlign.right,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(

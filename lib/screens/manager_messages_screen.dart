@@ -10,11 +10,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'auth_screen.dart';
 import 'intervenants_screen.dart';
 import 'manager_chat_thread_screen.dart';
+import 'manager_notifications_screen.dart';
 import 'manager_offers_screen.dart';
 import 'manager_property_route_helper.dart';
 import '../services/vps_media_service.dart';
 import '../widgets/sf_bottom_nav.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../widgets/unread_messages_nav_item.dart';
 
 // -- Color constants -----------------------------------------------------------
 const _kMsgBg = Color(0xFF070707);
@@ -653,7 +655,15 @@ class _MsgHeader extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const _BellButton(),
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ManagerNotificationsScreen(),
+                ),
+              ),
+              child: const _BellButton(),
+            ),
           ],
         ),
       ),
@@ -774,13 +784,10 @@ class _BellButton extends StatelessWidget {
         Positioned(
           right: 0,
           top: 0,
-          child: Container(
-            width: 9,
-            height: 9,
-            decoration: const BoxDecoration(
-              color: _kOrangeDot,
-              shape: BoxShape.circle,
-            ),
+          child: UnreadMessagesDot(
+            size: 9,
+            color: _kOrangeDot,
+            borderColor: const Color(0xFF1A1A1A),
           ),
         ),
       ],
