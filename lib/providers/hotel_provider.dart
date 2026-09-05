@@ -914,6 +914,7 @@ class HotelProvider extends ChangeNotifier {
       credential: OAuthProvider('apple.com').credential(
         idToken: idToken,
         rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
       ),
       email: (appleCredential.email ?? '').trim(),
       firstName: (appleCredential.givenName ?? '').trim(),
