@@ -34,7 +34,6 @@ const kOrangeDot = Color(0xFFFF6B35);
 const kGreenDot = Color(0xFF22C55E);
 const List<String> _kAllWorkerDepartments = <String>[
   'Maintenance generale',
-  'Main-d\'oeuvre qualifiee',
 ];
 final Map<String, _LatLng?> _geocodeCache = <String, _LatLng?>{};
 
@@ -1421,6 +1420,11 @@ List<String> _buildDepartmentOptions(List<_WorkerItem> workers) {
     'houseman',
     'concierge',
     'conciergerie',
+    "main-d'oeuvre qualifiee",
+    "main-d'oeuvre",
+    "main d'oeuvre qualifiee",
+    "main doeuvre qualifiee",
+    "maindoeuvrequalifiee",
   };
   final options = <String>{
     ..._kAllWorkerDepartments,
@@ -1428,14 +1432,23 @@ List<String> _buildDepartmentOptions(List<_WorkerItem> workers) {
         .map((worker) => worker.department)
         .whereType<String>()
         .where((item) {
-          final norm = item.trim().toLowerCase();
-          return item.isNotEmpty && !removedDepartments.contains(norm);
+          final norm = item
+              .trim()
+              .toLowerCase()
+              .replaceAll('é', 'e')
+              .replaceAll('è', 'e')
+              .replaceAll('ê', 'e')
+              .replaceAll('ë', 'e')
+              .replaceAll('œ', 'oe')
+              .replaceAll('’', "'");
+          return item.isNotEmpty &&
+              !removedDepartments.contains(norm) &&
+              !(norm.contains('main') && norm.contains('oeuvre'));
         })
   }.toList()
     ..sort((a, b) {
       const priority = <String, int>{
         'Maintenance generale': 0,
-        "Main-d'oeuvre qualifiee": 1,
       };
       final orderA = priority[a] ?? 99;
       final orderB = priority[b] ?? 99;
@@ -1924,11 +1937,10 @@ String _resolveWorkerDepartment({
         .replaceAll('\u0153', 'oe')
         .replaceAll('\u2019', "'");
     if (norm.contains('maintenance')) return _kAllWorkerDepartments[0]; // 'Maintenance generale'
-    if (norm.contains('main') && norm.contains('oeuvre')) return _kAllWorkerDepartments[1]; // 'Main-d\'oeuvre qualifiee'
     return department; // keep other departments as-is
   }
   if (role.contains('Maintenance')) return _kAllWorkerDepartments[0];
-  return _kAllWorkerDepartments[1];
+  return role.isNotEmpty ? role : _kAllWorkerDepartments[0];
 }
 
 bool _isQualifiedLaborDepartment(String? department) {
@@ -1953,7 +1965,10 @@ String _resolveWorkerDisplayHeadline({
     return trimmedSpecialty;
   }
   final trimmedDepartment = (department ?? '').trim();
-  if (trimmedDepartment.isNotEmpty) return trimmedDepartment;
+  if (trimmedDepartment.isNotEmpty && !_isQualifiedLaborDepartment(trimmedDepartment)) {
+    return trimmedDepartment;
+  }
+  if (trimmedSpecialty.isNotEmpty) return trimmedSpecialty;
   return fallbackRole;
 }
 
